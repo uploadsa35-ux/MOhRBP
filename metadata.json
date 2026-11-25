@@ -1,0 +1,8 @@
+{
+  "name": "Remix Microsoft Forms Multi-Page Submitter \u0026 Automator",
+  "description": "Automate 2-page and multi-page Microsoft Forms submissions with generated Playwright/Selenium scripts and Power Automate workflows with batch data support.\n\n",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

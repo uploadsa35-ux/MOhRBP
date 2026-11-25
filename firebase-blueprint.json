@@ -1,0 +1,257 @@
+{
+  "entities": {
+    "CrewMember": {
+      "title": "CrewMember",
+      "description": "Rig 50 crew roster member for observation tracking and identity selection",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the crew member"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of the crew member",
+          "maxLength": 100
+        },
+        "role": {
+          "type": "string",
+          "description": "Official job title or operational role on Rig 50",
+          "maxLength": 80
+        },
+        "isLead": {
+          "type": "boolean",
+          "description": "Whether this member holds a supervisory or lead position"
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Whether this member is currently active on tour"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the crew member was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the crew member was last modified"
+        }
+      },
+      "required": ["id", "name", "role", "active"]
+    },
+    "SoarCard": {
+      "title": "SoarCard",
+      "description": "Official SOAR (Stop Observe Act Report) card submitted to Microsoft Forms and recorded to database",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique card document ID"
+        },
+        "responseId": {
+          "type": "string",
+          "description": "Microsoft Forms submission response confirmation ID",
+          "maxLength": 100
+        },
+        "date": {
+          "type": "string",
+          "description": "Observation date in YYYY-MM-DD format",
+          "maxLength": 30
+        },
+        "time": {
+          "type": "string",
+          "description": "Time of submission",
+          "maxLength": 30
+        },
+        "zone": {
+          "type": "string",
+          "description": "Rig 50 location/zone",
+          "maxLength": 100
+        },
+        "role": {
+          "type": "string",
+          "description": "Observed crew role",
+          "maxLength": 100
+        },
+        "observerRole": {
+          "type": "string",
+          "description": "Role of the observer",
+          "maxLength": 100
+        },
+        "observerName": {
+          "type": "string",
+          "description": "Name of the observer (or Anonymous)",
+          "maxLength": 100
+        },
+        "assessment": {
+          "type": "string",
+          "enum": ["Safe", "Unsafe"],
+          "description": "Safety assessment evaluation"
+        },
+        "obsType": {
+          "type": "string",
+          "enum": [
+            "STOP Work Authority (SWA)",
+            "Behavior Observation",
+            "Condition",
+            "Stop Work Authority Drill"
+          ],
+          "description": "Observation categorization (Question 6)"
+        },
+        "observation": {
+          "type": "string",
+          "description": "Detailed observation description",
+          "maxLength": 2000
+        },
+        "action": {
+          "type": "string",
+          "description": "Corrective action or commendation taken",
+          "maxLength": 2000
+        },
+        "signature": {
+          "type": "string",
+          "description": "Normalized hash or unique fingerprint to guarantee card uniqueness across batches",
+          "maxLength": 256
+        },
+        "aiPolished": {
+          "type": "boolean",
+          "description": "Whether this card was crafted or enhanced by Gemini AI"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the card was recorded into Firestore"
+        }
+      },
+      "required": ["id", "zone", "role", "assessment", "obsType", "observation", "action", "signature"]
+    },
+    "AppSetting": {
+      "title": "AppSetting",
+      "description": "Portal and security settings for Rig 50 SOAR platform",
+      "type": "object",
+      "properties": {
+        "supervisorNumber": {
+          "type": "string",
+          "description": "Supervisor passkey pin",
+          "maxLength": 20
+        },
+        "portalLockedDown": {
+          "type": "boolean",
+          "description": "Whether entire portal is restricted to supervisor"
+        },
+        "tabPermissions": {
+          "type": "object",
+          "description": "Map of tab visibility settings"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when settings were last saved"
+        }
+      },
+      "required": ["supervisorNumber", "portalLockedDown"]
+    },
+    "AiTrainingIdea": {
+      "title": "AiTrainingIdea",
+      "description": "User-provided safety observation idea, exemplar card, or drilling scenario used to train and guide Gemini AI",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique training idea identifier"
+        },
+        "topic": {
+          "type": "string",
+          "description": "Topic or title of the idea",
+          "maxLength": 150
+        },
+        "zone": {
+          "type": "string",
+          "description": "Rig 50 operational zone",
+          "maxLength": 100
+        },
+        "role": {
+          "type": "string",
+          "description": "Target crew role",
+          "maxLength": 100
+        },
+        "assessment": {
+          "type": "string",
+          "enum": ["Safe", "Unsafe"],
+          "description": "Target assessment"
+        },
+        "obsType": {
+          "type": "string",
+          "enum": [
+            "STOP Work Authority (SWA)",
+            "Behavior Observation",
+            "Condition",
+            "Stop Work Authority Drill"
+          ],
+          "description": "Target observation type"
+        },
+        "observation": {
+          "type": "string",
+          "description": "Observation scenario guidance or exemplar text",
+          "maxLength": 2000
+        },
+        "action": {
+          "type": "string",
+          "description": "Corrective action or commendation guideline",
+          "maxLength": 2000
+        },
+        "keywords": {
+          "type": "string",
+          "description": "Comma-separated keywords or equipment tags",
+          "maxLength": 500
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Whether this training idea is actively fed into the Gemini AI prompts"
+        },
+        "usageCount": {
+          "type": "number",
+          "description": "Number of times this training idea has been used by Gemini AI to generate or coach SOAR cards"
+        },
+        "lastUsedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when this training idea was last used in AI card generation"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when this idea was created"
+        }
+      },
+      "required": ["id", "topic", "observation", "action", "isActive"]
+    }
+  },
+  "firestore": {
+    "/crewMembers/{memberId}": {
+      "schema": {
+        "$ref": "#/entities/CrewMember"
+      },
+      "description": "Collection of active and past Rig 50 crew members rostered in the system"
+    },
+    "/soarCards/{cardId}": {
+      "schema": {
+        "$ref": "#/entities/SoarCard"
+      },
+      "description": "Persistent repository of all submitted SOAR cards guaranteeing permanent uniqueness"
+    },
+    "/settings/{settingId}": {
+      "schema": {
+        "$ref": "#/entities/AppSetting"
+      },
+      "description": "Global application configuration and tab access permissions"
+    },
+    "/aiTrainingIdeas/{ideaId}": {
+      "schema": {
+        "$ref": "#/entities/AiTrainingIdea"
+      },
+      "description": "Persistent repository of user-submitted ideas and exemplar cards used to train and prompt Gemini AI"
+    }
+  }
+}

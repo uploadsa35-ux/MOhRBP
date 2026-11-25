@@ -1,0 +1,149 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation for CrewMember
+    function isValidCrewMember(data) {
+      return data.keys().hasAll(['id', 'name', 'role', 'active']) &&
+        data.keys().hasOnly(['id', 'name', 'role', 'isLead', 'active', 'createdAt', 'updatedAt']) &&
+        data.id is string && isValidId(data.id) &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+        data.role is string && data.role.size() > 0 && data.role.size() <= 80 &&
+        data.active is bool &&
+        (!('isLead' in data) || data.isLead is bool) &&
+        (!('createdAt' in data) || data.createdAt is string) &&
+        (!('updatedAt' in data) || data.updatedAt is string);
+    }
+
+    // Validation for SoarCard
+    function isValidSoarCard(data) {
+      return data.keys().hasAll(['id', 'zone', 'role', 'assessment', 'obsType', 'observation', 'action', 'signature']) &&
+        data.keys().hasOnly([
+          'id', 'responseId', 'date', 'time', 'zone', 'role',
+          'observerRole', 'observerName', 'assessment', 'obsType',
+          'observation', 'action', 'signature', 'aiPolished', 'createdAt'
+        ]) &&
+        data.id is string && isValidId(data.id) &&
+        data.zone is string && data.zone.size() > 0 && data.zone.size() <= 100 &&
+        data.role is string && data.role.size() > 0 && data.role.size() <= 100 &&
+        data.assessment is string && (data.assessment == 'Safe' || data.assessment == 'Unsafe') &&
+        data.obsType is string && (
+          data.obsType == 'STOP Work Authority (SWA)' ||
+          data.obsType == 'Behavior Observation' ||
+          data.obsType == 'Condition' ||
+          data.obsType == 'Stop Work Authority Drill'
+        ) &&
+        data.observation is string && data.observation.size() > 0 && data.observation.size() <= 2000 &&
+        data.action is string && data.action.size() > 0 && data.action.size() <= 2000 &&
+        data.signature is string && data.signature.size() > 0 && data.signature.size() <= 256 &&
+        (!('responseId' in data) || (data.responseId is string && data.responseId.size() <= 100)) &&
+        (!('date' in data) || (data.date is string && data.date.size() <= 30)) &&
+        (!('time' in data) || (data.time is string && data.time.size() <= 30)) &&
+        (!('observerRole' in data) || (data.observerRole is string && data.observerRole.size() <= 100)) &&
+        (!('observerName' in data) || (data.observerName is string && data.observerName.size() <= 100)) &&
+        (!('aiPolished' in data) || data.aiPolished is bool) &&
+        (!('createdAt' in data) || data.createdAt is string);
+    }
+
+    // Validation for AppSetting
+    function isValidAppSetting(data) {
+      return (
+        data.keys().hasAll(['supervisorNumber', 'portalLockedDown']) &&
+        data.keys().hasOnly(['supervisorNumber', 'portalLockedDown', 'tabPermissions', 'updatedAt']) &&
+        data.supervisorNumber is string && data.supervisorNumber.size() <= 20 &&
+        data.portalLockedDown is bool &&
+        (!('tabPermissions' in data) || data.tabPermissions is map) &&
+        (!('updatedAt' in data) || data.updatedAt is string)
+      ) || (
+        data.keys().hasAll(['crew']) &&
+        data.crew is list &&
+        (!('anonymousRatio' in data) || data.anonymousRatio is number) &&
+        (!('updatedAt' in data) || data.updatedAt is string)
+      ) || (
+        ('blacklist' in data && data.blacklist is list) ||
+        ('items' in data && data.items is list) ||
+        ('counter' in data) ||
+        ('totalSubmitted' in data) ||
+        ('dailySchedule' in data) ||
+        ('enabled' in data) ||
+        ('dailyTime' in data) ||
+        ('recipientEmail' in data) ||
+        ('categoryBreakdown' in data) ||
+        ('timezone' in data) ||
+        ('logs' in data) ||
+        data.keys().size() == 0 || ('status' in data) || ('connected' in data)
+      );
+    }
+
+    // Validation for AiTrainingIdea
+    function isValidAiTrainingIdea(data) {
+      return data.keys().hasAll(['id', 'topic', 'observation', 'action', 'isActive']) &&
+        data.keys().hasOnly([
+          'id', 'topic', 'zone', 'role', 'assessment', 'obsType',
+          'observation', 'action', 'keywords', 'isActive', 'usageCount', 'lastUsedAt', 'createdAt'
+        ]) &&
+        data.id is string && isValidId(data.id) &&
+        data.topic is string && data.topic.size() > 0 && data.topic.size() <= 150 &&
+        data.observation is string && data.observation.size() > 0 && data.observation.size() <= 2000 &&
+        data.action is string && data.action.size() > 0 && data.action.size() <= 2000 &&
+        data.isActive is bool &&
+        (!('zone' in data) || (data.zone is string && data.zone.size() <= 100)) &&
+        (!('role' in data) || (data.role is string && data.role.size() <= 100)) &&
+        (!('assessment' in data) || (data.assessment is string && (data.assessment == 'Safe' || data.assessment == 'Unsafe'))) &&
+        (!('obsType' in data) || (data.obsType is string && data.obsType.size() <= 100)) &&
+        (!('keywords' in data) || (data.keywords is string && data.keywords.size() <= 500)) &&
+        (!('usageCount' in data) || (data.usageCount is number && data.usageCount >= 0)) &&
+        (!('lastUsedAt' in data) || data.lastUsedAt is string) &&
+        (!('createdAt' in data) || data.createdAt is string);
+    }
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Crew roster collection
+    match /crewMembers/{memberId} {
+      allow read: if true;
+      allow create: if isValidId(memberId) && isValidCrewMember(incoming()) && incoming().id == memberId;
+      allow update: if isValidId(memberId) && isValidCrewMember(incoming()) && incoming().id == memberId;
+      allow delete: if isValidId(memberId);
+    }
+
+    // SOAR cards repository
+    match /soarCards/{cardId} {
+      allow read: if true;
+      allow create: if isValidId(cardId) && isValidSoarCard(incoming()) && incoming().id == cardId;
+      allow update: if false; // Once submitted, cards are immutable audit records
+      allow delete: if isValidId(cardId);
+    }
+
+    // Settings
+    match /settings/{settingId} {
+      allow read: if true;
+      allow create, update: if isValidId(settingId) && isValidAppSetting(incoming());
+      allow delete: if false;
+    }
+
+    // AI Training Ideas & Exemplar Bank
+    match /aiTrainingIdeas/{ideaId} {
+      allow read: if true;
+      allow create: if isValidId(ideaId) && isValidAiTrainingIdea(incoming()) && incoming().id == ideaId;
+      allow update: if isValidId(ideaId) && isValidAiTrainingIdea(incoming()) && incoming().id == ideaId;
+      allow delete: if isValidId(ideaId);
+    }
+  }
+}
